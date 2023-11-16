@@ -1,0 +1,11 @@
+## IDF Component Manager Manifest File
+dependencies:
+  ## Required IDF version
+  idf:
+    version: ">=4.1.0"
+  lan867x:
+    path: lan867x
+    git: git@github.com:bogdankolendovskyy/esp-eth-drivers.git
+  ethernet_init:
+    path: ethernet_init
+    git: git@github.com:bogdankolendovskyy/esp-eth-drivers.git

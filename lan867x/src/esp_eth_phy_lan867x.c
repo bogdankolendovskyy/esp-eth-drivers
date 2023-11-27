@@ -178,35 +178,6 @@ static esp_err_t lan867x_set_duplex(esp_eth_phy_t *phy, eth_duplex_t duplex)
     return ESP_ERR_NOT_SUPPORTED;
 }
 
-static esp_err_t lan867x_loopback(esp_eth_phy_t *phy, bool enable)
-{
-    // to do: figure out how it should behave
-    esp_err_t ret = ESP_OK;
-    phy_802_3_t *phy_802_3 = esp_eth_phy_into_phy_802_3(phy);
-    esp_eth_mediator_t *eth = phy_802_3->eth;
-    /* Set Loopback function */
-    bmcr_reg_t bmcr;
-    lan867x_plca_ctrl0_reg_t plca_ctrl0;
-    lan867x_plca_ctrl1_reg_t plca_ctrl1;
-    ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_BMCR_REG_ADDR, &(bmcr.val)), err, TAG, "read BMCR failed");
-    ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL0_REG_ADDR, &(plca_ctrl0.val)), err, TAG, "read PLCA_CTRL0 failed");
-    ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL1_REG_ADDR, &(plca_ctrl1.val)), err, TAG, "read PLCA_CTRL1 failed");
-    if (enable) {
-        // For loopback to work PLCA must be disabled
-        bmcr.en_loopback = 1;
-        bool plca_en = false;
-        lan867x_custom_ioctl(phy, LAN867X_ETH_CMD_S_PLCA, &plca_en);
-    } else {
-        bmcr.en_loopback = 0;
-    }
-    ESP_GOTO_ON_ERROR(eth->phy_reg_write(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL0_REG_ADDR, plca_ctrl0.val), err, TAG, "write PLCA_CTRL0 failed");
-    ESP_GOTO_ON_ERROR(eth->phy_reg_write(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL1_REG_ADDR, plca_ctrl1.val), err, TAG, "write PLCA_CTRL1 failed");
-    ESP_GOTO_ON_ERROR(eth->phy_reg_write(eth, phy_802_3->addr, ETH_PHY_BMCR_REG_ADDR, bmcr.val), err, TAG, "write BMCR failed");
-    return ESP_OK;
-err:
-    return ret;
-}
-
 static esp_err_t lan867x_custom_ioctl(esp_eth_phy_t *phy, uint32_t cmd, void *data)
 {
     esp_err_t ret;
@@ -247,6 +218,35 @@ static esp_err_t lan867x_custom_ioctl(esp_eth_phy_t *phy, uint32_t cmd, void *da
             ret = ESP_ERR_INVALID_ARG;
             break;
     }
+    return ESP_OK;
+err:
+    return ret;
+}
+
+static esp_err_t lan867x_loopback(esp_eth_phy_t *phy, bool enable)
+{
+    // to do: figure out how it should behave
+    esp_err_t ret = ESP_OK;
+    phy_802_3_t *phy_802_3 = esp_eth_phy_into_phy_802_3(phy);
+    esp_eth_mediator_t *eth = phy_802_3->eth;
+    /* Set Loopback function */
+    bmcr_reg_t bmcr;
+    lan867x_plca_ctrl0_reg_t plca_ctrl0;
+    lan867x_plca_ctrl1_reg_t plca_ctrl1;
+    ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_BMCR_REG_ADDR, &(bmcr.val)), err, TAG, "read BMCR failed");
+    ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL0_REG_ADDR, &(plca_ctrl0.val)), err, TAG, "read PLCA_CTRL0 failed");
+    ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL1_REG_ADDR, &(plca_ctrl1.val)), err, TAG, "read PLCA_CTRL1 failed");
+    if (enable) {
+        // For loopback to work PLCA must be disabled
+        bmcr.en_loopback = 1;
+        bool plca_en = false;
+        lan867x_custom_ioctl(phy, LAN867X_ETH_CMD_S_PLCA, &plca_en);
+    } else {
+        bmcr.en_loopback = 0;
+    }
+    ESP_GOTO_ON_ERROR(eth->phy_reg_write(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL0_REG_ADDR, plca_ctrl0.val), err, TAG, "write PLCA_CTRL0 failed");
+    ESP_GOTO_ON_ERROR(eth->phy_reg_write(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL1_REG_ADDR, plca_ctrl1.val), err, TAG, "write PLCA_CTRL1 failed");
+    ESP_GOTO_ON_ERROR(eth->phy_reg_write(eth, phy_802_3->addr, ETH_PHY_BMCR_REG_ADDR, bmcr.val), err, TAG, "write BMCR failed");
     return ESP_OK;
 err:
     return ret;

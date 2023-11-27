@@ -4,8 +4,6 @@ dependencies:
   idf:
     version: ">=4.1.0"
   lan867x:
-    path: lan867x
-    git: git@github.com:bogdankolendovskyy/esp-eth-drivers.git
+    override_path: "../../../../../lan867x"
   ethernet_init:
-    path: ethernet_init
-    git: git@github.com:bogdankolendovskyy/esp-eth-drivers.git
+    override_path: "../../../../../ethernet_init"

@@ -16,8 +16,8 @@ typedef enum {
     LAN867X_ETH_CMD_S_PLCA = ETH_CMD_CUSTOM_PHY_CMDS,   /*!< Enable or disable PLCA */
     LAN867X_ETH_CMD_S_PLCA_NCNT,                        /*!< Set PLCA node count */
     LAN867X_ETH_CMD_G_PLCA_NCNT,                        /*!< Get PLCA node count */
-    LAN867X_ETH_CMD_S_PLCA_ID,                          /*!< Set PLCA node count */
-    LAN867X_ETH_CMD_G_PLCA_ID,                          /*!< Get PLCA node count */
+    LAN867X_ETH_CMD_S_PLCA_ID,                          /*!< Set PLCA ID */
+    LAN867X_ETH_CMD_G_PLCA_ID,                          /*!< Get PLCA ID */
     LAN768X_ETH_CMD_PLCA_RST                            /*!< Reset PLCA*/
 } phy_lan867x_custom_io_cmd_t;
 

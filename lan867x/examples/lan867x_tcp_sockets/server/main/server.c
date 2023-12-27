@@ -13,13 +13,8 @@
 #define SOCKET_PORT         5000
 #define LISTENER_MAX_QUEUE  10
 #define SOCKET_MAX_LENGTH   128
-#define IP_TO_UINT32(o1,o2,o3,o4)   (o4<<24)+(o3<<16)+(o2<<8)+(o1)
 
-static const char *TAG = "lan867x_example";
-
-typedef struct {
-    
-} eth_frame_t;
+static const char *TAG = "lan867x_server";
 
 /** Event handler for IP_EVENT_ETH_GOT_IP */
 static void got_ip_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *data)
@@ -35,12 +30,12 @@ static void got_ip_event_handler(void *arg, esp_event_base_t event_base, int32_t
     ESP_LOGI(TAG, "~~~~~~~~~~~");
 }
 
-void my_event_connected_handler(void *esp_netif, esp_event_base_t base, int32_t event_id, void *data)
+static void my_event_connected_handler(void *esp_netif, esp_event_base_t base, int32_t event_id, void *data)
 {
     esp_netif_dhcps_start(esp_netif);
 }
 
-void my_ip_assigned_handler(void *esp_netif, esp_event_base_t base, int32_t event_id, void *data)
+static void my_ip_assigned_handler(void *esp_netif, esp_event_base_t base, int32_t event_id, void *data)
 {
     ip_event_got_ip_t *event = (ip_event_got_ip_t *) data;
     const esp_netif_ip_info_t *ip_info = &event->ip_info;
@@ -58,9 +53,9 @@ void app_main(void)
     // Initialize TCP/IP network interface aka the esp-netif (should be called only once in application)
     ESP_ERROR_CHECK(esp_netif_init());
     esp_netif_ip_info_t ip_info = {
-        .ip = {.addr = IP_TO_UINT32(192, 168, 1, 1)},
-        .netmask = {.addr =  IP_TO_UINT32(255, 255, 255, 0)},
-        .gw = {.addr = IP_TO_UINT32(192, 168, 1, 255)}
+        .ip = {.addr = ESP_IP4TOADDR(192, 168, 1, 1)},
+        .netmask = {.addr =  ESP_IP4TOADDR(255, 255, 255, 0)},
+        .gw = {.addr = ESP_IP4TOADDR(192, 168, 1, 255)}
     };
     const esp_netif_inherent_config_t eth_behav_cfg = {
             .get_ip_event = IP_EVENT_ETH_GOT_IP,
@@ -78,7 +73,7 @@ void app_main(void)
     // Register user defined event handers
     esp_event_handler_register(ETH_EVENT, ETHERNET_EVENT_CONNECTED, my_event_connected_handler, eth_netif);
     esp_event_handler_register(IP_EVENT, IP_EVENT_AP_STAIPASSIGNED, my_ip_assigned_handler, NULL);
-    esp_event_handler_register(IP_EVENT, IP_EVENT_ETH_GOT_IP, &got_ip_event_handler, NULL);
+    esp_event_handler_register(IP_EVENT, IP_EVENT_ETH_GOT_IP, got_ip_event_handler, NULL);
     // Stop dhcp client and set a static IP address
     esp_netif_dhcpc_stop(eth_netif);
     esp_netif_set_ip_info(eth_netif, &ip_info);

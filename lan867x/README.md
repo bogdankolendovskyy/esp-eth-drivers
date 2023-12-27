@@ -3,8 +3,7 @@
 ## Overview
 
 The LAN8670/1/2 is a high-performance 10BASE-T1S single-pair Ethernet PHY transceiver for 10 Mbit/s half-duplex networking over a single pair of conductors. 
-Utilizing standard Ethernet technology in sensor/actuator networks reduces application costs by eliminating gateways necessary with legacy networking technologies.
-More information about the chip can found in the product [datasheets](https://ww1.microchip.com/downloads/aemDocuments/documents/AIS/ProductDocuments/DataSheets/LAN8670-1-2-Data-Sheet-60001573.pdf).
+More information about the chip can found on the product page: [LAN8670](https://www.microchip.com/en-us/product/lan8670), [LAN8671](https://www.microchip.com/en-us/product/lan8671).
 
 ## ESP-IDF Usage
 
@@ -25,4 +24,17 @@ phy_config.reset_gpio_num = CONFIG_EXAMPLE_ETH_PHY_RST_GPIO;
 esp_eth_phy_t *phy = esp_eth_phy_new_lan867x(&phy_config);
 ```
 
-and use the Ethernet driver as you are used to. For more information of how to use ESP-IDF Ethernet driver, visit [ESP-IDF Programming Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/network/esp_eth.html).
+#### You may need to setup the PLCA
+
+PLCA configuration is done using `custom_ioctl` function with following parameters.
+
+| Command                     | Argument       | Action                                                 |
+|-----------------------------|----------------|--------------------------------------------------------|
+| LAN867X_ETH_CMD_S_PLCA      | bool* enable   | Enable (if true) or disable PLCA                       |
+| LAN867X_ETH_CMD_S_PLCA_NCNT | uint8_t* count | Set node count to the value passed through the pointer |
+| LAN867X_ETH_CMD_G_PLCA_NCNT | uint8_t* count | Write node count configured in the PLCA to the pointer |
+| LAN867X_ETH_CMD_S_PLCA_ID   | uint8_t* id    | Set ID to the value passed through the pointer         |
+| LAN867X_ETH_CMD_G_PLCA_ID   | uint8_t* id    | Write ID configured in the PLCA to the pointer         |
+| LAN768X_ETH_CMD_PLCA_RST    |                | Perform reset of the PLCA                              |
+
+and you are ready to use the Ethernet driver as you are used to. For more information of how to use ESP-IDF Ethernet driver, visit [ESP-IDF Programming Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/network/esp_eth.html).

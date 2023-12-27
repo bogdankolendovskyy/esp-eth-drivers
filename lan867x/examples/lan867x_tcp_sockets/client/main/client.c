@@ -9,12 +9,12 @@
 #include "ethernet_init.h"
 #include "lwip/sockets.h"
 
+#define SOCKET_ADDRESS      "192.168.1.1"
 #define SOCKET_PORT         5000
 #define SOCKET_MAX_LENGTH   128
-#define IP_TO_UINT32(o1,o2,o3,o4)   (o4<<24)+(o3<<16)+(o2<<8)+(o1)
 
-static const char *TAG = "lan867x_example";
-SemaphoreHandle_t xGotIpSemaphore;
+static const char *TAG = "lan867x_client";
+static SemaphoreHandle_t xGotIpSemaphore;
 
 /** Event handler for IP_EVENT_ETH_GOT_IP */
 static void got_ip_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *data)
@@ -56,7 +56,7 @@ void app_main(void)
     int client_fd = socket(AF_INET, SOCK_STREAM, 0);
     struct sockaddr_in serv_addr;
     serv_addr.sin_family = AF_INET;
-    inet_pton(AF_INET, "192.168.1.1", &serv_addr.sin_addr);
+    inet_pton(AF_INET, SOCKET_ADDRESS, &serv_addr.sin_addr);
     serv_addr.sin_port = htons(SOCKET_PORT);
     // Wait until IP address is assigned to this device
     xSemaphoreTake(xGotIpSemaphore, portMAX_DELAY);

@@ -87,16 +87,16 @@ err:
 
 static esp_err_t lan867x_update_link_duplex_speed(phy_lan867x_t *lan867x)
 {
-    // speed is always 10 mbps, duplex is always half and link status indication is not supported. What to do ?
     esp_err_t ret = ESP_OK;
     esp_eth_mediator_t *eth = lan867x->phy_802_3.eth;
     uint32_t addr = lan867x->phy_802_3.addr;
     bmcr_reg_t bmcr;
+    bmsr_reg_t bmsr;
     ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, addr, ETH_PHY_BMCR_REG_ADDR, &(bmcr.val)), err, TAG, "read BMCR failed");
-    // to do: figure out what to do
-    eth_speed_t speed = ETH_SPEED_10M;
-    eth_duplex_t duplex = ETH_DUPLEX_HALF;
-    eth_link_t link = ETH_LINK_UP;
+    ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, addr, ETH_PHY_BMSR_REG_ADDR, &(bmsr.val)), err, TAG, "read BMSR failed");
+    eth_speed_t speed = bmcr.speed_select ? ETH_SPEED_100M : ETH_SPEED_10M;
+    eth_duplex_t duplex = bmcr.duplex_mode  ? ETH_DUPLEX_FULL : ETH_DUPLEX_HALF;
+    eth_link_t link = bmsr.link_status ? ETH_LINK_UP : ETH_LINK_DOWN;
     // This will be ran exactly once, when everything is setting up
     if (lan867x->phy_802_3.link_status != link) {
         ESP_GOTO_ON_ERROR(eth->on_state_changed(eth, ETH_STATE_SPEED, (void *)speed), err, TAG, "change speed failed");
@@ -131,7 +131,6 @@ static esp_err_t lan867x_init(esp_eth_phy_t *phy)
     /* Check PHY ID */
     uint32_t oui;
     uint8_t model;
-    // to do: figure out what is wrong with this OUI layout and test it
     ESP_GOTO_ON_ERROR(esp_eth_phy_lan867x_read_oui(phy_802_3, &oui), err, TAG, "read OUI failed");
     ESP_GOTO_ON_ERROR(esp_eth_phy_802_3_read_manufac_info(phy_802_3, &model, NULL), err, TAG, "read manufacturer's info failed");
     ESP_GOTO_ON_FALSE(oui == LAN867X_OUI, ESP_FAIL, err, TAG, "wrong chip OUI %lx (expected %x)", oui, LAN867X_OUI);
@@ -153,14 +152,19 @@ static esp_err_t lan867x_autonego_ctrl(esp_eth_phy_t *phy, eth_phy_autoneg_cmd_t
 {
     switch (cmd) {
         case ESP_ETH_PHY_AUTONEGO_RESTART:
+            // Fallthrough
         case ESP_ETH_PHY_AUTONEGO_EN:
+            // Fallthrough
         case ESP_ETH_PHY_AUTONEGO_DIS:
             return ESP_ERR_NOT_SUPPORTED; // no autonegotiation operations are supported
         case ESP_ETH_PHY_AUTONEGO_G_STAT:
-            return 0; // since autonegotiation is not supported it is always disabled
+            // since autonegotiation is not supported it is always indicated disabled
+            *autonego_en_stat = false;
+            break;
         default:
             return ESP_ERR_INVALID_ARG;
     }
+    return ESP_OK;
 }
 
 static esp_err_t lan867x_advertise_pause_ability(esp_eth_phy_t *phy, uint32_t ability)
@@ -225,7 +229,6 @@ err:
 
 static esp_err_t lan867x_loopback(esp_eth_phy_t *phy, bool enable)
 {
-    // to do: figure out how it should behave
     esp_err_t ret = ESP_OK;
     phy_802_3_t *phy_802_3 = esp_eth_phy_into_phy_802_3(phy);
     esp_eth_mediator_t *eth = phy_802_3->eth;

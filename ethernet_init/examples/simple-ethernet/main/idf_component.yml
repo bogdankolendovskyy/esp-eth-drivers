@@ -3,6 +3,7 @@ dependencies:
     version: '>=5.0'
   ethernet_init:
     version: '*'
-
     # For local development use the local copy of the component
     override_path: '../../../'
+  lan867x:
+    override_path: '../../../../lan867x'

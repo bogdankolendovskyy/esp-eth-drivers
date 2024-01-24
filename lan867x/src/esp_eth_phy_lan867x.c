@@ -79,7 +79,7 @@ esp_err_t esp_eth_phy_lan867x_read_oui(phy_802_3_t *phy_802_3, uint32_t *oui)
     ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_IDR1_REG_ADDR, &(id1.val)), err, TAG, "read ID1 failed");
     ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_IDR2_REG_ADDR, &(id2.val)), err, TAG, "read ID2 failed");
 
-    *oui = (id2.oui_bits_18_23 << 18) + ((id1.oui_bits_10_17 << 10) + (id1.oui_bits_2_9<<2));
+    *oui = (id2.oui_bits_18_23 << 18) + ((id1.oui_bits_10_17 << 10) + (id1.oui_bits_2_9 << 2));
     return ESP_OK;
 err:
     return ret;
@@ -151,18 +151,18 @@ err:
 static esp_err_t lan867x_autonego_ctrl(esp_eth_phy_t *phy, eth_phy_autoneg_cmd_t cmd, bool *autonego_en_stat)
 {
     switch (cmd) {
-        case ESP_ETH_PHY_AUTONEGO_RESTART:
-            // Fallthrough
-        case ESP_ETH_PHY_AUTONEGO_EN:
-            // Fallthrough
-        case ESP_ETH_PHY_AUTONEGO_DIS:
-            return ESP_ERR_NOT_SUPPORTED; // no autonegotiation operations are supported
-        case ESP_ETH_PHY_AUTONEGO_G_STAT:
-            // since autonegotiation is not supported it is always indicated disabled
-            *autonego_en_stat = false;
-            break;
-        default:
-            return ESP_ERR_INVALID_ARG;
+    case ESP_ETH_PHY_AUTONEGO_RESTART:
+    // Fallthrough
+    case ESP_ETH_PHY_AUTONEGO_EN:
+    // Fallthrough
+    case ESP_ETH_PHY_AUTONEGO_DIS:
+        return ESP_ERR_NOT_SUPPORTED; // no autonegotiation operations are supported
+    case ESP_ETH_PHY_AUTONEGO_G_STAT:
+        // since autonegotiation is not supported it is always indicated disabled
+        *autonego_en_stat = false;
+        break;
+    default:
+        return ESP_ERR_INVALID_ARG;
     }
     return ESP_OK;
 }
@@ -190,37 +190,37 @@ static esp_err_t lan867x_custom_ioctl(esp_eth_phy_t *phy, uint32_t cmd, void *da
     lan867x_plca_ctrl0_reg_t plca_ctrl0;
     lan867x_plca_ctrl1_reg_t plca_ctrl1;
     switch (cmd) {
-        case LAN867X_ETH_CMD_S_PLCA:
-            ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL0_REG_ADDR, &(plca_ctrl0.val)), err, TAG, "read PLCA_CTRL0 failed");
-            plca_ctrl0.en = (*(bool *)data == true);
-            ESP_GOTO_ON_ERROR(eth->phy_reg_write(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL0_REG_ADDR, plca_ctrl0.val), err, TAG, "write PLCA_CTRL0 failed");
-            break;
-        case LAN867X_ETH_CMD_S_PLCA_NCNT:
-            ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL1_REG_ADDR, &(plca_ctrl1.val)), err, TAG, "read PLCA_CTRL1 failed");
-            plca_ctrl1.ncnt = *(uint8_t *)data;
-            ESP_GOTO_ON_ERROR(eth->phy_reg_write(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL1_REG_ADDR, plca_ctrl1.val), err, TAG, "write PLCA_CTRL1 failed");
-            break;
-        case LAN867X_ETH_CMD_G_PLCA_NCNT:
-            ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL1_REG_ADDR, &(plca_ctrl1.val)), err, TAG, "read PLCA_CTRL1 failed");
-            *(uint8_t *)data = plca_ctrl1.ncnt;
-            break;
-        case LAN867X_ETH_CMD_S_PLCA_ID:
-            ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL1_REG_ADDR, &(plca_ctrl1.val)), err, TAG, "read PLCA_CTRL1 failed");
-            plca_ctrl1.id = *(uint8_t *)data;
-            ESP_GOTO_ON_ERROR(eth->phy_reg_write(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL1_REG_ADDR, plca_ctrl1.val), err, TAG, "write PLCA_CTRL1 failed");
-            break;
-        case LAN867X_ETH_CMD_G_PLCA_ID:
-            ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL1_REG_ADDR, &(plca_ctrl1.val)), err, TAG, "read PLCA_CTRL1 failed");
-            *(uint8_t *)data = plca_ctrl1.id;
-            break;
-        case LAN768X_ETH_CMD_PLCA_RST:
-            ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL0_REG_ADDR, &(plca_ctrl0.val)), err, TAG, "read PLCA_CTRL0 failed");
-            plca_ctrl0.rst = 1;
-            ESP_GOTO_ON_ERROR(eth->phy_reg_write(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL0_REG_ADDR, plca_ctrl0.val), err, TAG, "write PLCA_CTRL0 failed");
-            break;
-        default:
-            ret = ESP_ERR_INVALID_ARG;
-            break;
+    case LAN867X_ETH_CMD_S_PLCA:
+        ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL0_REG_ADDR, &(plca_ctrl0.val)), err, TAG, "read PLCA_CTRL0 failed");
+        plca_ctrl0.en = (*(bool *)data == true);
+        ESP_GOTO_ON_ERROR(eth->phy_reg_write(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL0_REG_ADDR, plca_ctrl0.val), err, TAG, "write PLCA_CTRL0 failed");
+        break;
+    case LAN867X_ETH_CMD_S_PLCA_NCNT:
+        ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL1_REG_ADDR, &(plca_ctrl1.val)), err, TAG, "read PLCA_CTRL1 failed");
+        plca_ctrl1.ncnt = *(uint8_t *)data;
+        ESP_GOTO_ON_ERROR(eth->phy_reg_write(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL1_REG_ADDR, plca_ctrl1.val), err, TAG, "write PLCA_CTRL1 failed");
+        break;
+    case LAN867X_ETH_CMD_G_PLCA_NCNT:
+        ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL1_REG_ADDR, &(plca_ctrl1.val)), err, TAG, "read PLCA_CTRL1 failed");
+        *(uint8_t *)data = plca_ctrl1.ncnt;
+        break;
+    case LAN867X_ETH_CMD_S_PLCA_ID:
+        ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL1_REG_ADDR, &(plca_ctrl1.val)), err, TAG, "read PLCA_CTRL1 failed");
+        plca_ctrl1.id = *(uint8_t *)data;
+        ESP_GOTO_ON_ERROR(eth->phy_reg_write(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL1_REG_ADDR, plca_ctrl1.val), err, TAG, "write PLCA_CTRL1 failed");
+        break;
+    case LAN867X_ETH_CMD_G_PLCA_ID:
+        ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL1_REG_ADDR, &(plca_ctrl1.val)), err, TAG, "read PLCA_CTRL1 failed");
+        *(uint8_t *)data = plca_ctrl1.id;
+        break;
+    case LAN768X_ETH_CMD_PLCA_RST:
+        ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL0_REG_ADDR, &(plca_ctrl0.val)), err, TAG, "read PLCA_CTRL0 failed");
+        plca_ctrl0.rst = 1;
+        ESP_GOTO_ON_ERROR(eth->phy_reg_write(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL0_REG_ADDR, plca_ctrl0.val), err, TAG, "write PLCA_CTRL0 failed");
+        break;
+    default:
+        ret = ESP_ERR_INVALID_ARG;
+        break;
     }
     return ESP_OK;
 err:
@@ -261,7 +261,7 @@ esp_eth_phy_t *esp_eth_phy_new_lan867x(const eth_phy_config_t *config)
     phy_lan867x_t *lan867x = calloc(1, sizeof(phy_lan867x_t));
     ESP_GOTO_ON_FALSE(lan867x, NULL, err, TAG, "calloc lan867x failed");
     ESP_GOTO_ON_FALSE(esp_eth_phy_802_3_obj_config_init(&lan867x->phy_802_3, config) == ESP_OK,
-                        NULL, err, TAG, "configuration initialization of PHY 802.3 failed");
+                      NULL, err, TAG, "configuration initialization of PHY 802.3 failed");
 
     // redefine functions which need to be customized for sake of LAN867x
     lan867x->phy_802_3.parent.init = lan867x_init;

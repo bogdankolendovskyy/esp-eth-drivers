@@ -61,8 +61,8 @@ void app_main(void)
     // Wait until IP address is assigned to this device
     xSemaphoreTake(xGotIpSemaphore, portMAX_DELAY);
     int transmission_cnt = 0;
-    while(1) {
-        connect(client_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+    while (1) {
+        connect(client_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
         snprintf(txbuffer, SOCKET_MAX_LENGTH, "Transmission #%d. Hello from ESP32 via LAN867x", ++transmission_cnt);
         int bytesSent = send(client_fd, txbuffer, strlen(txbuffer), 0);
         ESP_LOGI(TAG, "Sent tranmission #%d which was %d bytes long.", transmission_cnt, bytesSent);

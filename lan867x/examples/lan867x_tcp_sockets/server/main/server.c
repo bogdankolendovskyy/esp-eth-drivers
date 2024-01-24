@@ -58,13 +58,13 @@ void app_main(void)
         .gw = {.addr = ESP_IP4TOADDR(192, 168, 1, 255)}
     };
     const esp_netif_inherent_config_t eth_behav_cfg = {
-            .get_ip_event = IP_EVENT_ETH_GOT_IP,
-            .lost_ip_event = 0,
-            .flags = ESP_NETIF_DHCP_SERVER,
-            .ip_info = &ip_info,
-            .if_key = "ETH_DHCPS",
-            .if_desc = "eth",
-            .route_prio = 50
+        .get_ip_event = IP_EVENT_ETH_GOT_IP,
+        .lost_ip_event = 0,
+        .flags = ESP_NETIF_DHCP_SERVER,
+        .ip_info = &ip_info,
+        .if_key = "ETH_DHCPS",
+        .if_desc = "eth",
+        .route_prio = 50
     };
     esp_netif_config_t eth_as_dhcps_cfg = { .base = &eth_behav_cfg, .stack = ESP_NETIF_NETSTACK_DEFAULT_ETH };
     esp_netif_t *eth_netif = esp_netif_new(&eth_as_dhcps_cfg);
@@ -89,11 +89,11 @@ void app_main(void)
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port = htons(SOCKET_PORT);
-    bind(server_fd, (struct sockaddr*)&address, sizeof(address));
+    bind(server_fd, (struct sockaddr *)&address, sizeof(address));
     // listen and wait for transmission to come
     listen(server_fd, LISTENER_MAX_QUEUE);
-    int new_socket = accept(server_fd, (struct sockaddr*)&address, &addrlen);
-    while(1) {
+    int new_socket = accept(server_fd, (struct sockaddr *)&address, &addrlen);
+    while (1) {
         // when transmission comes - print it
         recv(new_socket, rxbuffer, SOCKET_MAX_LENGTH, 0);
         printf("Received: \"%s\" from %s.\n", rxbuffer, inet_ntoa(address.sin_addr));

@@ -48,23 +48,32 @@ typedef union {
         uint32_t rst : 1;           // PLCA Reset
         uint32_t en : 1;            // PLCA Enable
     };
-    uint32_t val;
+    uint16_t val;
 } lan867x_plca_ctrl0_reg_t;
-#define ETH_PHY_PLCA_CTRL0_REG_ADDR (0xCA01)
+#define ETH_PHY_PLCA_CTRL0_REG_MMD_ADDR (0xCA01)
 
 typedef union {
     struct {
         uint8_t id;     // PLCA ID
         uint8_t ncnt;   // Node count
     };
-    uint32_t val;
+    uint16_t val;
 } lan867x_plca_ctrl1_reg_t;
-#define ETH_PHY_PLCA_CTRL1_REG_ADDR (0xCA02)
+#define ETH_PHY_PLCA_CTRL1_REG_MMD_ADDR (0xCA02)
 
+typedef union {
+    struct {
+        uint8_t entries[2];
+    };
+    uint16_t val;
+} lan867x_plca_multiple_id_reg_t;
+#define ETH_PHY_PLCA_MULTIPLE_ID_BASE_MMD_ADDR (0x0030)
 
 typedef struct {
     phy_802_3_t phy_802_3;
 } phy_lan867x_t;
+
+#define MISC_REGISTERS_DEVICE   0x1f
 
 /***********Custom functions implementations***********/
 esp_err_t esp_eth_phy_lan867x_read_oui(phy_802_3_t *phy_802_3, uint32_t *oui)
@@ -182,41 +191,83 @@ static esp_err_t lan867x_set_duplex(esp_eth_phy_t *phy, eth_duplex_t duplex)
     return ESP_ERR_NOT_SUPPORTED;
 }
 
-static esp_err_t lan867x_custom_ioctl(esp_eth_phy_t *phy, uint32_t cmd, void *data)
+static esp_err_t lan867x_custom_ioctl(esp_eth_phy_t *phy, phy_lan867x_custom_io_cmd_t cmd, void *data)
 {
     esp_err_t ret;
     phy_802_3_t *phy_802_3 = esp_eth_phy_into_phy_802_3(phy);
     esp_eth_mediator_t *eth = phy_802_3->eth;
     lan867x_plca_ctrl0_reg_t plca_ctrl0;
     lan867x_plca_ctrl1_reg_t plca_ctrl1;
+    lan867x_plca_multiple_id_reg_t plca_multiple_id_reg;
     switch (cmd) {
-    case LAN867X_ETH_CMD_S_PLCA:
-        ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL0_REG_ADDR, &(plca_ctrl0.val)), err, TAG, "read PLCA_CTRL0 failed");
-        plca_ctrl0.en = (*(bool *)data == true);
-        ESP_GOTO_ON_ERROR(eth->phy_reg_write(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL0_REG_ADDR, plca_ctrl0.val), err, TAG, "write PLCA_CTRL0 failed");
+    case LAN867X_ETH_CMD_S_EN_PLCA:
+        // check if loopback is enabled if user wants to enable PLCA
+        if(*(bool *)data != false){
+            bmcr_reg_t bmcr;
+            ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_BMCR_REG_ADDR, &(bmcr.val)), err, TAG, "read BMCR failed");
+            ESP_GOTO_ON_FALSE(bmcr.en_loopback == false, ESP_ERR_INVALID_STATE, err, TAG, "PLCA can't be enabled at the same time as loopback");
+        }
+        esp_eth_phy_802_3_read_mmd_register(phy_802_3, MISC_REGISTERS_DEVICE, ETH_PHY_PLCA_CTRL0_REG_MMD_ADDR, &plca_ctrl0.val);
+        plca_ctrl0.en = (*(bool *)data != false); // anything but 0 will be regarded as true
+        esp_eth_phy_802_3_write_mmd_register(phy_802_3, MISC_REGISTERS_DEVICE, ETH_PHY_PLCA_CTRL0_REG_MMD_ADDR, plca_ctrl0.val);
+        break;
+    case LAN867X_ETH_CMD_G_EN_PLCA:
+        esp_eth_phy_802_3_read_mmd_register(phy_802_3, MISC_REGISTERS_DEVICE, ETH_PHY_PLCA_CTRL0_REG_MMD_ADDR, &plca_ctrl0.val);
+        *((bool *)data) = plca_ctrl0.en;
         break;
     case LAN867X_ETH_CMD_S_PLCA_NCNT:
-        ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL1_REG_ADDR, &(plca_ctrl1.val)), err, TAG, "read PLCA_CTRL1 failed");
-        plca_ctrl1.ncnt = *(uint8_t *)data;
-        ESP_GOTO_ON_ERROR(eth->phy_reg_write(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL1_REG_ADDR, plca_ctrl1.val), err, TAG, "write PLCA_CTRL1 failed");
+        esp_eth_phy_802_3_read_mmd_register(phy_802_3, MISC_REGISTERS_DEVICE, ETH_PHY_PLCA_CTRL1_REG_MMD_ADDR, &plca_ctrl1.val);
+        plca_ctrl1.ncnt = *((uint8_t*) data);
+        esp_eth_phy_802_3_write_mmd_register(phy_802_3, MISC_REGISTERS_DEVICE, ETH_PHY_PLCA_CTRL1_REG_MMD_ADDR, plca_ctrl1.val);
         break;
     case LAN867X_ETH_CMD_G_PLCA_NCNT:
-        ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL1_REG_ADDR, &(plca_ctrl1.val)), err, TAG, "read PLCA_CTRL1 failed");
-        *(uint8_t *)data = plca_ctrl1.ncnt;
+        esp_eth_phy_802_3_read_mmd_register(phy_802_3, MISC_REGISTERS_DEVICE, ETH_PHY_PLCA_CTRL1_REG_MMD_ADDR, &plca_ctrl1.val);
+        *((uint8_t*) data) = plca_ctrl1.ncnt;
         break;
     case LAN867X_ETH_CMD_S_PLCA_ID:
-        ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL1_REG_ADDR, &(plca_ctrl1.val)), err, TAG, "read PLCA_CTRL1 failed");
-        plca_ctrl1.id = *(uint8_t *)data;
-        ESP_GOTO_ON_ERROR(eth->phy_reg_write(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL1_REG_ADDR, plca_ctrl1.val), err, TAG, "write PLCA_CTRL1 failed");
+        esp_eth_phy_802_3_read_mmd_register(phy_802_3, MISC_REGISTERS_DEVICE, ETH_PHY_PLCA_CTRL1_REG_MMD_ADDR, &plca_ctrl1.val);
+        plca_ctrl1.id = *((uint8_t*) data);
+        esp_eth_phy_802_3_write_mmd_register(phy_802_3, MISC_REGISTERS_DEVICE, ETH_PHY_PLCA_CTRL1_REG_MMD_ADDR, plca_ctrl1.val);
         break;
     case LAN867X_ETH_CMD_G_PLCA_ID:
-        ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL1_REG_ADDR, &(plca_ctrl1.val)), err, TAG, "read PLCA_CTRL1 failed");
-        *(uint8_t *)data = plca_ctrl1.id;
+        esp_eth_phy_802_3_read_mmd_register(phy_802_3, MISC_REGISTERS_DEVICE, ETH_PHY_PLCA_CTRL1_REG_MMD_ADDR, &plca_ctrl1.val);
+        *((uint32_t*) data) = plca_ctrl1.id;
         break;
     case LAN768X_ETH_CMD_PLCA_RST:
-        ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL0_REG_ADDR, &(plca_ctrl0.val)), err, TAG, "read PLCA_CTRL0 failed");
-        plca_ctrl0.rst = 1;
-        ESP_GOTO_ON_ERROR(eth->phy_reg_write(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL0_REG_ADDR, plca_ctrl0.val), err, TAG, "write PLCA_CTRL0 failed");
+        esp_eth_phy_802_3_read_mmd_register(phy_802_3, MISC_REGISTERS_DEVICE, ETH_PHY_PLCA_CTRL0_REG_MMD_ADDR, &plca_ctrl0.val);
+        plca_ctrl0.rst = true;
+        esp_eth_phy_802_3_write_mmd_register(phy_802_3, MISC_REGISTERS_DEVICE, ETH_PHY_PLCA_CTRL0_REG_MMD_ADDR, plca_ctrl0.val);
+        break;
+    case LAN867X_ETH_CMD_ADD_TX_OPPORTUNITY:
+        // Transmit opportunities is stored inside one of four registers
+        // Additional transmit opportunity is assigned if value is not 0x00 or 0xff
+        // So the algorithm is to find first 0x00 or 0xff and replace with id
+        for(uint16_t i = 0; i < 4; i++){
+            esp_eth_phy_802_3_read_mmd_register(phy_802_3, MISC_REGISTERS_DEVICE, ETH_PHY_PLCA_MULTIPLE_ID_BASE_MMD_ADDR+i, &plca_multiple_id_reg.val);
+            for(uint8_t j = 0; j < 2; j++){
+                if(plca_multiple_id_reg.entries[j] == 0x00 || plca_multiple_id_reg.entries[j] == 0xff){
+                    plca_multiple_id_reg.entries[j] = *((uint8_t*) data);
+                    esp_eth_phy_802_3_write_mmd_register(phy_802_3, MISC_REGISTERS_DEVICE, ETH_PHY_PLCA_MULTIPLE_ID_BASE_MMD_ADDR+i, plca_multiple_id_reg.val);
+                    return ESP_OK;
+                }
+            }
+        }
+        ESP_GOTO_ON_FALSE(false, ESP_ERR_NO_MEM, err, TAG, "Unable to add additional transmit opportunity for 0x%02x. Maximum amount (8) reached.", *((uint8_t*) data));
+        break;
+    case LAN867X_ETH_CMD_RM_TX_OPPORTUNITY:
+        // Same method as with LAN867X_ETH_CMD_ADD_TX_OPPORTUNITY, but instead of finding
+        // 0x00 or 0xff we look for first instance of id and replace with 0x00
+        for(uint16_t i = 0; i < 4; i++){
+            esp_eth_phy_802_3_read_mmd_register(phy_802_3, MISC_REGISTERS_DEVICE, ETH_PHY_PLCA_MULTIPLE_ID_BASE_MMD_ADDR+i, &plca_multiple_id_reg.val);
+            for(uint8_t j = 0; j < 2; j++){
+                if(plca_multiple_id_reg.entries[j] == *((uint8_t*) data)){
+                    plca_multiple_id_reg.entries[j] = 0x00;
+                    esp_eth_phy_802_3_write_mmd_register(phy_802_3, MISC_REGISTERS_DEVICE, ETH_PHY_PLCA_MULTIPLE_ID_BASE_MMD_ADDR+i, plca_multiple_id_reg.val);
+                    return ESP_OK;
+                }
+            }
+        }
+        ESP_GOTO_ON_FALSE(false, ESP_ERR_NOT_FOUND, err, TAG, "Unable to remove additional transmit opportunity for 0x%02x since it doesn't have one already.", *((uint8_t*) data));
         break;
     default:
         ret = ESP_ERR_INVALID_ARG;
@@ -232,25 +283,11 @@ static esp_err_t lan867x_loopback(esp_eth_phy_t *phy, bool enable)
     esp_err_t ret = ESP_OK;
     phy_802_3_t *phy_802_3 = esp_eth_phy_into_phy_802_3(phy);
     esp_eth_mediator_t *eth = phy_802_3->eth;
-    /* Set Loopback function */
-    bmcr_reg_t bmcr;
-    lan867x_plca_ctrl0_reg_t plca_ctrl0;
-    lan867x_plca_ctrl1_reg_t plca_ctrl1;
-    ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_BMCR_REG_ADDR, &(bmcr.val)), err, TAG, "read BMCR failed");
-    ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL0_REG_ADDR, &(plca_ctrl0.val)), err, TAG, "read PLCA_CTRL0 failed");
-    ESP_GOTO_ON_ERROR(eth->phy_reg_read(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL1_REG_ADDR, &(plca_ctrl1.val)), err, TAG, "read PLCA_CTRL1 failed");
-    if (enable) {
-        // For loopback to work PLCA must be disabled
-        bmcr.en_loopback = 1;
-        bool plca_en = false;
-        lan867x_custom_ioctl(phy, LAN867X_ETH_CMD_S_PLCA, &plca_en);
-    } else {
-        bmcr.en_loopback = 0;
-    }
-    ESP_GOTO_ON_ERROR(eth->phy_reg_write(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL0_REG_ADDR, plca_ctrl0.val), err, TAG, "write PLCA_CTRL0 failed");
-    ESP_GOTO_ON_ERROR(eth->phy_reg_write(eth, phy_802_3->addr, ETH_PHY_PLCA_CTRL1_REG_ADDR, plca_ctrl1.val), err, TAG, "write PLCA_CTRL1 failed");
-    ESP_GOTO_ON_ERROR(eth->phy_reg_write(eth, phy_802_3->addr, ETH_PHY_BMCR_REG_ADDR, bmcr.val), err, TAG, "write BMCR failed");
-    return ESP_OK;
+    // For loopback to work PLCA must be disabled
+    bool plca_status = false;
+    lan867x_custom_ioctl(phy, LAN867X_ETH_CMD_G_EN_PLCA, &plca_status);
+    ESP_GOTO_ON_FALSE(plca_status == false, ESP_ERR_INVALID_STATE, err, TAG, "Unable to set loopback while PLCA is enabled. Disable it to use loopback");
+    return esp_eth_phy_802_3_loopback(phy_802_3, enable);
 err:
     return ret;
 }

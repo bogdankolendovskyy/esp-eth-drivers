@@ -26,15 +26,19 @@ esp_eth_phy_t *phy = esp_eth_phy_new_lan867x(&phy_config);
 
 #### You may need to setup the PLCA
 
-PLCA configuration is done using `custom_ioctl` function with following parameters.
+Depending on the task you are doing some additional setup may be required.
+PLCA configuration is done using `esp_eth_ioctl` function with one of following commands.
 
-| Command                     | Argument       | Action                                                 |
-|-----------------------------|----------------|--------------------------------------------------------|
-| LAN867X_ETH_CMD_S_PLCA      | bool* enable   | Enable (if true) or disable PLCA                       |
-| LAN867X_ETH_CMD_S_PLCA_NCNT | uint8_t* count | Set node count to the value passed through the pointer |
-| LAN867X_ETH_CMD_G_PLCA_NCNT | uint8_t* count | Write node count configured in the PLCA to the pointer |
-| LAN867X_ETH_CMD_S_PLCA_ID   | uint8_t* id    | Set ID to the value passed through the pointer         |
-| LAN867X_ETH_CMD_G_PLCA_ID   | uint8_t* id    | Write ID configured in the PLCA to the pointer         |
-| LAN768X_ETH_CMD_PLCA_RST    |                | Perform reset of the PLCA                              |
+| Command                            | Argument         | Action                                                              |
+|------------------------------------|------------------|---------------------------------------------------------------------|
+| LAN867X_ETH_CMD_S_EN_PLCA          | bool* enable     | Enable (if true) or disable PLCA                                    |
+| LAN867X_ETH_CMD_G_EN_PLCA          | bool* enable     | Write PLCA status (true if enabled) to the location via pointer     |
+| LAN867X_ETH_CMD_S_PLCA_NCNT        | uint8_t* count   | Set node count to the value passed through the pointer              |
+| LAN867X_ETH_CMD_G_PLCA_NCNT        | uint8_t* count   | Write node count configured in the PLCA to the location via pointer |
+| LAN867X_ETH_CMD_S_PLCA_ID          | uint8_t* id      | Set ID to the value passed through the pointer                      |
+| LAN867X_ETH_CMD_G_PLCA_ID          | uint8_t* id      | Write ID configured in the PLCA to the location via pointer         |
+| LAN867X_ETH_CMD_ADD_TX_OPPORTUNITY | uint8_t* node_id | Add additional transmit opportunity for chosen node                 |
+| LAN867X_ETH_CMD_RM_TX_OPPORTUNITY  | uint8_t* node_id | Remove additional transmit opportunity for chosen node              |
+| LAN768X_ETH_CMD_PLCA_RST           |                  | Perform reset of the PLCA                                           |
 
 and you are ready to use the Ethernet driver as you are used to. For more information of how to use ESP-IDF Ethernet driver, visit [ESP-IDF Programming Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/network/esp_eth.html).

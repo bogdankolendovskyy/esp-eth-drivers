@@ -21,6 +21,10 @@ typedef enum {
     LAN867X_ETH_CMD_G_PLCA_ID,                           /*!< Get PLCA ID */
     LAN867X_ETH_CMD_ADD_TX_OPPORTUNITY,                  /*!< Add additional transmit opportunity for chosen node */
     LAN867X_ETH_CMD_RM_TX_OPPORTUNITY,                   /*!< Remove additional transmit opportunity for chosen node */
+    LAN867X_ETH_CMD_S_MAX_BURST_COUNT,                   /*!< Set max count of additional packets, set to 0 to disable */
+    LAN867X_ETH_CMD_G_MAX_BURST_COUNT,                   /*!< Get max count of additional packets, set to 0 to disable */
+    LAN867X_ETH_CMD_S_BURST_TIMER,                       /*!< Set time after transmission during which node is allowed to transmit more packets in incriments of 100ns */
+    LAN867X_ETH_CMD_G_BURST_TIMER,                       /*!< Get time after transmission during which node is allowed to transmit more packets in incriments of 100ns */
     LAN768X_ETH_CMD_PLCA_RST                             /*!< Reset PLCA*/
 } phy_lan867x_custom_io_cmd_t;
 

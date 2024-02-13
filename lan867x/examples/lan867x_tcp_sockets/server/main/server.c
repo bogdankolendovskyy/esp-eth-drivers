@@ -35,13 +35,6 @@ static void my_event_connected_handler(void *esp_netif, esp_event_base_t base, i
     esp_netif_dhcps_start(esp_netif);
 }
 
-static void my_ip_assigned_handler(void *esp_netif, esp_event_base_t base, int32_t event_id, void *data)
-{
-    ip_event_got_ip_t *event = (ip_event_got_ip_t *) data;
-    const esp_netif_ip_info_t *ip_info = &event->ip_info;
-    ESP_LOGI(TAG, "Assigned ip " IPSTR " to a connected device.", IP2STR(&ip_info->ip));
-}
-
 void app_main(void)
 {
     // Create default event loop that running in background
@@ -72,7 +65,6 @@ void app_main(void)
     ESP_ERROR_CHECK(esp_netif_attach(eth_netif, esp_eth_new_netif_glue(eth_handles[0])));
     // Register user defined event handers
     esp_event_handler_register(ETH_EVENT, ETHERNET_EVENT_CONNECTED, my_event_connected_handler, eth_netif);
-    esp_event_handler_register(IP_EVENT, IP_EVENT_AP_STAIPASSIGNED, my_ip_assigned_handler, NULL);
     esp_event_handler_register(IP_EVENT, IP_EVENT_ETH_GOT_IP, got_ip_event_handler, NULL);
     // Stop dhcp client and set a static IP address
     esp_netif_dhcpc_stop(eth_netif);

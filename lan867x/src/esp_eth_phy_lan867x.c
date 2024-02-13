@@ -48,7 +48,7 @@ typedef union {
         uint32_t rst : 1;           // PLCA Reset
         uint32_t en : 1;            // PLCA Enable
     };
-    uint16_t val;
+    uint32_t val;
 } lan867x_plca_ctrl0_reg_t;
 #define ETH_PHY_PLCA_CTRL0_REG_MMD_ADDR (0xCA01)
 
@@ -57,7 +57,7 @@ typedef union {
         uint8_t id;     // PLCA ID
         uint8_t ncnt;   // Node count
     };
-    uint16_t val;
+    uint32_t val;
 } lan867x_plca_ctrl1_reg_t;
 #define ETH_PHY_PLCA_CTRL1_REG_MMD_ADDR (0xCA02)
 
@@ -66,7 +66,7 @@ typedef union {
         uint8_t maxbc;  // Maximum burst count
         uint8_t btmr;   // Burst timer
     };
-    uint16_t val;
+    uint32_t val;
 } lan867x_plca_burst_reg_t;
 #define ETH_PHY_PLCA_BURST_REG_MMD_ADDR (0xCA05)
 
@@ -74,7 +74,7 @@ typedef union {
     struct {
         uint8_t entries[2];
     };
-    uint16_t val;
+    uint32_t val;
 } lan867x_plca_multiple_id_reg_t;
 #define ETH_PHY_PLCA_MULTID_BASE_MMD_ADDR (0x0030)
 

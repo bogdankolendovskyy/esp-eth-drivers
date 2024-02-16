@@ -11,7 +11,7 @@
 #include "lwip/sockets.h"
 
 #define SOCKET_PORT         5000
-#define LISTENER_MAX_QUEUE  10
+#define LISTENER_MAX_QUEUE  1
 #define SOCKET_MAX_LENGTH   128
 
 static const char *TAG = "lan867x_server";

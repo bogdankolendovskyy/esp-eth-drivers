@@ -4,4 +4,4 @@ targets:
 description: LAN867x Ethernet PHY Driver
 url: https://github.com/espressif/esp-eth-drivers/tree/master/lan867x
 dependencies:
-  idf: ">=4.4"
+  idf: ">=5.3"

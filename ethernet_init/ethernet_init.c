@@ -15,7 +15,9 @@
 #if CONFIG_ETH_USE_SPI_ETHERNET
 #include "driver/spi_master.h"
 #endif // CONFIG_ETH_USE_SPI_ETHERNET
+#if CONFIG_ETHERNET_PHY_LAN867X
 #include "esp_eth_phy_lan867x.h"
+#endif // CONFIG_ETHERNET_PHY_LAN867X
 
 
 #if CONFIG_ETHERNET_SPI_NUMBER

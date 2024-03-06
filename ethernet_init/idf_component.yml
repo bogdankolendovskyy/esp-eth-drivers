@@ -1,6 +1,6 @@
 dependencies:
   idf:
-    version: '>=5.0'
+    version: '>=5.1'
   lan867x:
     override_path: "../lan867x"
 description: This component initializes Ethernet driver based on Espressif IoT Development Framework Configuration.

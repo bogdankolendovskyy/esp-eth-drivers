@@ -9,6 +9,7 @@ jobs:
         idf_ver: ["latest"]
         example: ["simple-ethernet"]
         idf_target: ["esp32"]
+        eth_target: ["ip101", "lan87xx", "rtl8201", "ksz80xx", "dp83848", "lan867x",  "ksz8851snl", "w5500", "dm9051"]
 
     runs-on: ubuntu-20.04
     container: espressif/idf:${{ matrix.idf_ver }}
@@ -17,11 +18,13 @@ jobs:
         uses: actions/checkout@master
         with:
           path: esp_eth_drivers
-      - name: Build ${{ matrix.example }} with IDF-${{ matrix.idf_ver }} for ${{ matrix.idf_target }}
+      - name: Build ${{ matrix.example }} with IDF-${{ matrix.idf_ver }} for ${{ matrix.idf_target }} with ${{ matrix.eth_target }}
         env:
           IDF_TARGET: ${{ matrix.idf_target }}
         shell: bash
         run: |
           . ${IDF_PATH}/export.sh
           cd $GITHUB_WORKSPACE/esp_eth_drivers/ethernet_init/examples/${{ matrix.example }}
+          mv sdkconfig.defaults.${{ matrix.eth_target }} sdkconfig.defaults
+          idf.py reconfigure
           idf.py build

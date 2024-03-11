@@ -25,6 +25,5 @@ jobs:
         run: |
           . ${IDF_PATH}/export.sh
           cd $GITHUB_WORKSPACE/esp_eth_drivers/ethernet_init/examples/${{ matrix.example }}
-          mv sdkconfig.defaults.${{ matrix.eth_target }} sdkconfig.defaults
-          idf.py reconfigure
-          idf.py build
+          rm -f sdkconfig
+          idf.py -D SDKCONFIG_DEFAULTS="sdkconfig.defaults.${{ matrix.eth_target }}" build

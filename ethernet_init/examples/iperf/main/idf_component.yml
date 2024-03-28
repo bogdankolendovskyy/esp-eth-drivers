@@ -1,0 +1,5 @@
+dependencies:
+  espressif/ethernet_init:
+    override_path: '../../../'
+  espressif/iperf-cmd: "^0.1.1"
+  espressif/iperf: "^0.1.1"

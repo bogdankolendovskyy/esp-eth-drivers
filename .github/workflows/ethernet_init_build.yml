@@ -7,7 +7,7 @@ jobs:
     strategy:
       matrix:
         idf_ver: ["latest"]
-        example: ["simple-ethernet"]
+        example: ["simple-ethernet", "iperf"]
         idf_target: ["esp32"]
     runs-on: ubuntu-20.04
     container: espressif/idf:${{ matrix.idf_ver }}

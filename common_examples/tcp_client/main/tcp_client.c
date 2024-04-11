@@ -45,32 +45,10 @@ void app_main(void)
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_ETH_GOT_IP, &got_ip_event_handler, NULL));
     // Start Ethernet driver
     esp_eth_start(eth_handles[0]);
-    int server_fd, client_fd;
+    int client_fd;
     struct sockaddr_in server, client;
     char rxbuffer[SOCKET_MAX_LENGTH] = {0};
     char txbuffer[SOCKET_MAX_LENGTH] = {0};
-    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    client_fd = socket(AF_INET, SOCK_STREAM, 0);
 
-    server.sin_family = AF_INET;
-    server.sin_port = htons(SOCKET_PORT);
-    server.sin_addr.s_addr = htonl(INADDR_ANY);
-
-    int opt_val = 1;
-    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt_val, sizeof opt_val);
-    bind(server_fd, (struct sockaddr *) &server, sizeof(server));
-    listen(server_fd, 1);
-    int transmission_cnt = 0;
-    while (1) {
-        socklen_t client_len = sizeof(client);
-        client_fd = accept(server_fd, (struct sockaddr *) &client, &client_len);
-        while (1) {
-            int read = recv(client_fd, rxbuffer, SOCKET_MAX_LENGTH, 0);
-            if (!read) {
-                break;    // done reading
-            }
-            ESP_LOGI(TAG, "Received \"%s\"", rxbuffer);
-            snprintf(txbuffer, SOCKET_MAX_LENGTH, "Transmission #%d. Hello from ESP32 TCP client", ++transmission_cnt);
-            send(client_fd, txbuffer, read, 0);
-        }
-    }
 }

@@ -49,4 +49,4 @@ while args.count == None or counter <= args.count:
     counter+=1
     time.sleep(args.time * 0.001)
 sock.close()
-logger.info("Performed %d transmissions, received %d replies with %d timeouts (%.2f%%)", args.count, receives, timeouts, (timeouts/receives)*100.0)
+logger.info("Performed %d transmissions, received %d replies with %d timeouts (%.2f%% success rate)", args.count, receives, timeouts, (1 - timeouts/receives)*100.0)

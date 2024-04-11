@@ -6,15 +6,7 @@ import signal
 import fcntl
 import struct
 
-def get_ip_address(ifname):
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    return socket.inet_ntoa(fcntl.ioctl(
-        s.fileno(),
-        0x8915,  # SIOCGIFADDR
-        struct.pack('256s', ifname[:15])
-    )[20:24])
-
-parser = argparse.ArgumentParser(description='Run TCP connection using berkley sockets and wait for connections', epilog='Part of the tcp_client example for esp_eth_drivers')
+parser = argparse.ArgumentParser(description='Serve TCP connection using berkley sockets and wait for connections', epilog='Part of the tcp_client example for esp_eth_drivers')
 parser.add_argument('ip')
 parser.add_argument('-p', '--port', type=int, default=5000, choices=range(1, 65535), metavar="PORT", help='Port to listen on')
 parser.add_argument('-s', '--silent', action='store_true', help="Do not log incoming transmissions")
@@ -35,3 +27,16 @@ sock.bind((args.ip, args.port))
 # listen for incoming connections
 sock.listen(0)
 logger.info(f"Listening on {args.ip}:{args.port}")
+conn, address = sock.accept()
+logging.debug(f"Accepted connection from {address}")
+
+counter = 0
+while True:
+    data = conn.recv(128).decode()
+    logging.debug("Received: \"%s\"", data)
+    msg = f"Transmission {counter}: Hello from Python"
+    logger.debug("Transmitting: \"%s\"", msg)
+    sock.sendall(str.encode(msg))
+    counter += 1
+
+

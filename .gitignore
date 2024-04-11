@@ -32,6 +32,9 @@ GPATH
 **/examples/**/sdkconfig.old
 **/examples/**/build
 **/examples/**/managed_components
+common_examples/**/sdkconfig
+common_examples/**/sdkconfig.old
+common_examples/**/build
 common_examples/**/managed_components
 
 # Doc build artifacts

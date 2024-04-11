@@ -4,9 +4,16 @@ import argparse
 import logging
 import signal
 
+def port_type(astr, min=1, max=65535):
+    value = int(astr)
+    if min<= value <= max:
+        return value
+    else:
+        raise argparse.ArgumentTypeError('value not in range %s-%s'%(min,max))
+
 parser = argparse.ArgumentParser(description='Serve TCP connection using berkley sockets and wait for connections', epilog='Part of the tcp_client example for esp_eth_drivers')
 parser.add_argument('ip')
-parser.add_argument('-p', '--port', type=int, default=5000, choices=range(1, 65535), metavar="PORT", help='Port to listen on')
+parser.add_argument('-p', '--port', type=port_type, default=5000, choices=range(1, 65535), metavar="PORT", help='Port to listen on')
 parser.add_argument('-s', '--silent', action='store_true', help="Do not log incoming transmissions")
 args = parser.parse_args()
 

@@ -11,7 +11,9 @@
 
 #define SOCKET_PORT         5000
 #define SOCKET_MAX_LENGTH   128
-static const char *TAG = "tcp_server";
+
+static const char *TAG = "tcp_client";
+static SemaphoreHandle_t xGotIpSemaphore;
 
 /** Event handler for IP_EVENT_ETH_GOT_IP */
 static void got_ip_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *data)
@@ -25,12 +27,15 @@ static void got_ip_event_handler(void *arg, esp_event_base_t event_base, int32_t
     ESP_LOGI(TAG, "ETHMASK:" IPSTR, IP2STR(&ip_info->netmask));
     ESP_LOGI(TAG, "ETHGW:" IPSTR, IP2STR(&ip_info->gw));
     ESP_LOGI(TAG, "~~~~~~~~~~~");
+    xSemaphoreGive(xGotIpSemaphore);
 }
 
 void app_main(void)
 {
     // Create default event loop that running in background
     ESP_ERROR_CHECK(esp_event_loop_create_default());
+    // Initialize semaphore
+    xGotIpSemaphore = xSemaphoreCreateBinary();
     // Initialize Ethernet driver
     uint8_t eth_port_cnt = 0;
     esp_eth_handle_t *eth_handles;
@@ -45,10 +50,26 @@ void app_main(void)
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_ETH_GOT_IP, &got_ip_event_handler, NULL));
     // Start Ethernet driver
     esp_eth_start(eth_handles[0]);
+    // Wait until IP address is assigned to this device
+    xSemaphoreTake(xGotIpSemaphore, portMAX_DELAY);
     int client_fd;
-    struct sockaddr_in server, client;
+    struct sockaddr_in server;
     char rxbuffer[SOCKET_MAX_LENGTH] = {0};
     char txbuffer[SOCKET_MAX_LENGTH] = {0};
     client_fd = socket(AF_INET, SOCK_STREAM, 0);
-
+    server.sin_family = AF_INET;
+    server.sin_port = htons(SOCKET_PORT);
+    server.sin_addr.s_addr = inet_addr("192.168.1.0");  // To do: Find a way to get this ip and not hardcode it
+    connect(client_fd, (struct sockaddr *)&server, sizeof(struct sockaddr));
+    int transmission_cnt = 0;
+    while (1) {
+        snprintf(txbuffer, SOCKET_MAX_LENGTH, "Transmission #%d. Hello from ESP32 TCP client", ++transmission_cnt);
+        ESP_LOGI(TAG, "Transmitting: \"%s\"", txbuffer);
+        write(client_fd, txbuffer, SOCKET_MAX_LENGTH);
+        read(client_fd, rxbuffer, SOCKET_MAX_LENGTH);
+        ESP_LOGI(TAG, "Received \"%s\"", rxbuffer);
+        memset(txbuffer, 0, SOCKET_MAX_LENGTH);
+        memset(rxbuffer, 0, SOCKET_MAX_LENGTH);
+        vTaskDelay(pdMS_TO_TICKS(500));
+    }
 }

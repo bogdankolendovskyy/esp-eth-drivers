@@ -8,6 +8,7 @@
 #include "esp_log.h"
 #include "ethernet_init.h"
 #include "lwip/sockets.h"
+#include "sdkconfig.h"
 
 #define SOCKET_PORT         5000
 #define SOCKET_MAX_LENGTH   128
@@ -59,7 +60,7 @@ void app_main(void)
     client_fd = socket(AF_INET, SOCK_STREAM, 0);
     server.sin_family = AF_INET;
     server.sin_port = htons(SOCKET_PORT);
-    server.sin_addr.s_addr = inet_addr("192.168.1.0");  // To do: Find a way to get this ip and not hardcode it
+    server.sin_addr.s_addr = inet_addr(CONFIG_EXAMPLE_SERVER_IP_ADDRESS);
     connect(client_fd, (struct sockaddr *)&server, sizeof(struct sockaddr));
     int transmission_cnt = 0;
     while (1) {

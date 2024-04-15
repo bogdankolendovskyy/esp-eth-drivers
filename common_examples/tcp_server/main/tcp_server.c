@@ -56,7 +56,6 @@ void app_main(void)
     server.sin_addr.s_addr = htonl(INADDR_ANY);
 
     int opt_val = 1;
-    //setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt_val, sizeof opt_val);
     bind(server_fd, (struct sockaddr *) &server, sizeof(server));
     listen(server_fd, 1);
     int transmission_cnt = 0;

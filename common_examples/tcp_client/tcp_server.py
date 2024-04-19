@@ -4,31 +4,22 @@ import argparse
 import logging
 import signal
 
-def port_type(astr, min=1, max=65535):
-    value = int(astr)
-    if min<= value <= max:
-        return value
-    else:
-        raise argparse.ArgumentTypeError('value not in range %s-%s'%(min,max))
-
 parser = argparse.ArgumentParser(description='Serve TCP connection using berkley sockets and wait for connections', epilog='Part of the tcp_client example for esp_eth_drivers')
 parser.add_argument('ip')
-parser.add_argument('-p', '--port', type=port_type, default=5000, choices=range(1, 65535), metavar="PORT", help='Port to listen on')
-parser.add_argument('-s', '--silent', action='store_true', help="Do not log incoming transmissions")
 args = parser.parse_args()
+
+SOCKET_PORT = 5000
 
 # setup sigint handler
 signal.signal(signal.SIGINT, lambda s, f : exit(0))
 
 logger = logging.getLogger("tcp_server")
 logging.basicConfig(format="%(name)s :: %(levelname)-8s :: %(message)s", level=logging.DEBUG)
-if args.silent:
-    logger.setLevel(logging.INFO)
-logger.info("Listening on %s:%d", args.ip, args.port)
+logger.info("Listening on %s:%d", args.ip, SOCKET_PORT)
 
 # init server
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock.bind((args.ip, args.port))
+sock.bind((args.ip, 5000))
 # listen for incoming connections
 sock.listen(1)
 

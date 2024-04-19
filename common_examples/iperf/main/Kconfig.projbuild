@@ -1,4 +1,4 @@
-menu "Iperf example-specific options"
+menu "Example options"
     config EXAMPLE_ACT_AS_DHCP_SERVER
         bool "Act sa DHCP server"
         default n

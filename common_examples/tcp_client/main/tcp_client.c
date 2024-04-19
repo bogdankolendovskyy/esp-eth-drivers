@@ -40,19 +40,45 @@ void app_main(void)
     // Initialize Ethernet driver
     uint8_t eth_port_cnt = 0;
     esp_eth_handle_t *eth_handles;
+    char if_key_str[10];
+    char if_desc_str[10];
     ESP_ERROR_CHECK(ethernet_init_all(&eth_handles, &eth_port_cnt));
-    // Initialize TCP/IP network interface aka the esp-netif (should be called only once in application)
-    ESP_ERROR_CHECK(esp_netif_init());
-    esp_netif_config_t cfg = ESP_NETIF_DEFAULT_ETH();
-    esp_netif_t *eth_netif = esp_netif_new(&cfg);
-    // Attach Ethernet driver to TCP/IP stack
-    ESP_ERROR_CHECK(esp_netif_attach(eth_netif, esp_eth_new_netif_glue(eth_handles[0])));
+    esp_netif_init();
     // Register user defined event handers
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_ETH_GOT_IP, &got_ip_event_handler, NULL));
-    // Start Ethernet driver
-    esp_eth_start(eth_handles[0]);
+    // Create instance(s) of esp-netif for Ethernet(s)
+    if (eth_port_cnt == 1) {
+        // Use ESP_NETIF_DEFAULT_ETH when just one Ethernet interface is used and you don't need to modify
+        // default esp-netif configuration parameters.
+        esp_netif_config_t cfg = ESP_NETIF_DEFAULT_ETH();
+        esp_netif_t *eth_netif = esp_netif_new(&cfg);
+        // Attach Ethernet driver to TCP/IP stack
+        ESP_ERROR_CHECK(esp_netif_attach(eth_netif, esp_eth_new_netif_glue(eth_handles[0])));
+    } else {
+        // Use ESP_NETIF_INHERENT_DEFAULT_ETH when multiple Ethernet interfaces are used and so you need to modify
+        // esp-netif configuration parameters for each interface (name, priority, etc.).
+        esp_netif_inherent_config_t esp_netif_config = ESP_NETIF_INHERENT_DEFAULT_ETH();
+        esp_netif_config_t cfg_spi = {
+            .base = &esp_netif_config,
+            .stack = ESP_NETIF_NETSTACK_DEFAULT_ETH
+        };
+
+        for (int i = 0; i < eth_port_cnt; i++) {
+            sprintf(if_key_str, "ETH_%d", i);
+            sprintf(if_desc_str, "eth%d", i);
+            esp_netif_config.if_key = if_key_str;
+            esp_netif_config.if_desc = if_desc_str;
+            esp_netif_config.route_prio -= i * 5;
+            esp_netif_t *eth_netif = esp_netif_new(&cfg_spi);
+
+            // Attach Ethernet driver to TCP/IP stack
+            ESP_ERROR_CHECK(esp_netif_attach(eth_netif, esp_eth_new_netif_glue(eth_handles[i])));
+            esp_eth_start(eth_handles[i]);
+        }
+    }
     // Wait until IP address is assigned to this device
     xSemaphoreTake(xGotIpSemaphore, portMAX_DELAY);
+    ESP_LOGI(TAG, "TCP client is started, waiting for the server to accept a connection.");
     int client_fd;
     struct sockaddr_in server;
     char rxbuffer[SOCKET_MAX_LENGTH] = {0};

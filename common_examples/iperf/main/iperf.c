@@ -6,7 +6,7 @@
 #include "iperf_cmd.h"
 #include "sdkconfig.h"
 
-static void my_event_connected_handler(void *esp_netif, esp_event_base_t base, int32_t event_id, void *data)
+static void start_dhcp_server_at_connection(void *esp_netif, esp_event_base_t base, int32_t event_id, void *data)
 {
     esp_netif_dhcps_start(esp_netif);
 }
@@ -20,13 +20,12 @@ void app_main(void)
     esp_event_loop_create_default();
     ethernet_init_all(&eth_handles, &eth_port_cnt);
 
-    //esp_netif_config_t cfg;
 #if CONFIG_EXAMPLE_ACT_AS_DHCP_SERVER
     // Act as DHCP server
     esp_netif_ip_info_t ip_info = {
         .ip = {.addr = ESP_IP4TOADDR(192, 168, 1, 1)},
         .netmask = {.addr =  ESP_IP4TOADDR(255, 255, 255, 0)},
-        .gw = {.addr = ESP_IP4TOADDR(192, 168, 1, 255)}
+        .gw = {.addr = ESP_IP4TOADDR(192, 168, 1, 1)}
     };
     const esp_netif_inherent_config_t eth_behav_cfg = {
         .get_ip_event = IP_EVENT_ETH_GOT_IP,
@@ -43,7 +42,7 @@ void app_main(void)
     esp_eth_handle_t eth_handle = eth_handles[0];
     esp_netif_attach(eth_netif, esp_eth_new_netif_glue(eth_handles[0]));
 
-    esp_event_handler_register(ETH_EVENT, ETHERNET_EVENT_CONNECTED, my_event_connected_handler, eth_netif);
+    esp_event_handler_register(ETH_EVENT, ETHERNET_EVENT_CONNECTED, start_dhcp_server_at_connection, eth_netif);
     esp_netif_dhcpc_stop(eth_netif);
     esp_netif_set_ip_info(eth_netif, &ip_info);
     esp_eth_start(eth_handle);

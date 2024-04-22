@@ -14,7 +14,7 @@
 #define SOCKET_MAX_LENGTH   128
 
 static const char *TAG = "tcp_client";
-static SemaphoreHandle_t xGotIpSemaphore;
+static SemaphoreHandle_t x_got_ip_semaphore;
 
 /** Event handler for IP_EVENT_ETH_GOT_IP */
 static void got_ip_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *data)
@@ -28,7 +28,7 @@ static void got_ip_event_handler(void *arg, esp_event_base_t event_base, int32_t
     ESP_LOGI(TAG, "ETHMASK:" IPSTR, IP2STR(&ip_info->netmask));
     ESP_LOGI(TAG, "ETHGW:" IPSTR, IP2STR(&ip_info->gw));
     ESP_LOGI(TAG, "~~~~~~~~~~~");
-    xSemaphoreGive(xGotIpSemaphore);
+    xSemaphoreGive(x_got_ip_semaphore);
 }
 
 void app_main(void)
@@ -36,7 +36,7 @@ void app_main(void)
     // Create default event loop that running in background
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     // Initialize semaphore
-    xGotIpSemaphore = xSemaphoreCreateBinary();
+    x_got_ip_semaphore = xSemaphoreCreateBinary();
     // Initialize Ethernet driver
     uint8_t eth_port_cnt = 0;
     esp_eth_handle_t *eth_handles;
@@ -87,7 +87,7 @@ void app_main(void)
     server.sin_family = AF_INET;
     server.sin_port = htons(SOCKET_PORT);
     server.sin_addr.s_addr = inet_addr(CONFIG_EXAMPLE_SERVER_IP_ADDRESS);
-    connect(client_fd, (struct sockaddr *)&server, sizeof(struct sockaddr));
+    ESP_ERROR_CHECK(connect(client_fd, (struct sockaddr *)&server, sizeof(struct sockaddr)));
     int transmission_cnt = 0;
     while (1) {
         snprintf(txbuffer, SOCKET_MAX_LENGTH, "Transmission #%d. Hello from ESP32 TCP client", ++transmission_cnt);

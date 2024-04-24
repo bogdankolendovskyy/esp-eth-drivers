@@ -8,6 +8,7 @@
 
 static void start_dhcp_server_at_connection(void *esp_netif, esp_event_base_t base, int32_t event_id, void *data)
 {
+    printf("WE ARE HERE\n");
     esp_netif_dhcps_start(esp_netif);
 }
 
@@ -27,7 +28,7 @@ void app_main(void)
         .netmask = {.addr =  ESP_IP4TOADDR(255, 255, 255, 0)},
         .gw = {.addr = ESP_IP4TOADDR(192, 168, 1, 1)}
     };
-    const esp_netif_inherent_config_t eth_behav_cfg = {
+    esp_netif_inherent_config_t eth_behav_cfg = {
         .get_ip_event = IP_EVENT_ETH_GOT_IP,
         .lost_ip_event = 0,
         .flags = ESP_NETIF_DHCP_SERVER,
@@ -36,16 +37,26 @@ void app_main(void)
         .if_desc = "eth",
         .route_prio = 50
     };
-    esp_netif_config_t cfg = { .base = &eth_behav_cfg, .stack = ESP_NETIF_NETSTACK_DEFAULT_ETH };
-
-    esp_netif_t *eth_netif = esp_netif_new(&cfg);
-    esp_eth_handle_t eth_handle = eth_handles[0];
-    esp_netif_attach(eth_netif, esp_eth_new_netif_glue(eth_handles[0]));
-
-    esp_event_handler_register(ETH_EVENT, ETHERNET_EVENT_CONNECTED, start_dhcp_server_at_connection, eth_netif);
-    esp_netif_dhcpc_stop(eth_netif);
-    esp_netif_set_ip_info(eth_netif, &ip_info);
-    esp_eth_start(eth_handle);
+    esp_netif_config_t cfg = {
+        .base = &eth_behav_cfg,
+        .stack = ESP_NETIF_NETSTACK_DEFAULT_ETH
+    };
+    char if_key_str[10];
+    char if_desc_str[10];
+    for (int i = 0; i < eth_port_cnt; i++) {
+        sprintf(if_key_str, "ETH_%d", i);
+        sprintf(if_desc_str, "eth%d", i);
+        eth_behav_cfg.if_key = if_key_str;
+        eth_behav_cfg.if_desc = if_desc_str;
+        eth_behav_cfg.route_prio -= i * 5;
+        esp_netif_t *eth_netif = esp_netif_new(&cfg);
+        ESP_ERROR_CHECK(esp_netif_attach(eth_netif, esp_eth_new_netif_glue(eth_handles[i])));
+        // Attach Ethernet driver to TCP/IP stack
+        esp_event_handler_register(ETH_EVENT, ETHERNET_EVENT_CONNECTED, start_dhcp_server_at_connection, eth_netif);
+        esp_netif_dhcpc_stop(eth_netif);
+        esp_netif_set_ip_info(eth_netif, &ip_info);
+        esp_eth_start(eth_handles[i]);
+    }
 #else
     // Act as DHCP client, usual behaviour
     char if_key_str[10];

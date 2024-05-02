@@ -77,7 +77,7 @@ void app_main(void)
         }
     }
     // Wait until IP address is assigned to this device
-    xSemaphoreTake(xGotIpSemaphore, portMAX_DELAY);
+    xSemaphoreTake(x_got_ip_semaphore, portMAX_DELAY);
     ESP_LOGI(TAG, "TCP client is started, waiting for the server to accept a connection.");
     int client_fd;
     struct sockaddr_in server;

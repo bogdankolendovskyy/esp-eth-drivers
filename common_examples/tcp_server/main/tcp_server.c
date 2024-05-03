@@ -13,23 +13,11 @@
 #define SOCKET_MAX_LENGTH   128
 static const char *TAG = "tcp_server";
 
-esp_netif_ip_info_t ip_info = {
-    .ip = {.addr = ESP_IP4TOADDR(192, 168, 1, 1)},
-    .netmask = {.addr =  ESP_IP4TOADDR(255, 255, 255, 0)},
-    .gw = {.addr = ESP_IP4TOADDR(192, 168, 1, 1)}
-};
-
-static void start_dhcp_server_at_connection(void *esp_netif, esp_event_base_t base, int32_t event_id, void *data)
-{
-    esp_netif_dhcpc_stop(esp_netif);
-    esp_netif_set_ip_info(esp_netif, &ip_info);
-    esp_netif_dhcps_start(esp_netif);
-}
-
-
 void app_main(void)
 {
     uint8_t eth_port_cnt = 0;
+    char if_key_str[10];
+    char if_desc_str[10];
     esp_eth_handle_t *eth_handles;
     esp_netif_config_t cfg;
     esp_netif_inherent_config_t eth_netif_cfg;
@@ -38,27 +26,55 @@ void app_main(void)
     ethernet_init_all(&eth_handles, &eth_port_cnt);
 
 #if CONFIG_EXAMPLE_ACT_AS_DHCP_SERVER
-    // Config for ESP32 to act as DHCP server
+    esp_netif_ip_info_t *ip_infos;
+
+    ip_infos = calloc(eth_port_cnt, sizeof(esp_netif_ip_info_t));
+
     eth_netif_cfg = (esp_netif_inherent_config_t) {
         .get_ip_event = IP_EVENT_ETH_GOT_IP,
         .lost_ip_event = 0,
         .flags = ESP_NETIF_DHCP_SERVER,
-        .ip_info = &ip_info,
-        .if_key = "ETH_DHCPS",
-        .if_desc = "eth",
         .route_prio = 50
     };
+    cfg = (esp_netif_config_t) {
+        .base = &eth_netif_cfg,
+        .stack = ESP_NETIF_NETSTACK_DEFAULT_ETH
+    };
+
+    for (uint8_t i = 0; i < eth_port_cnt; i++) {
+        sprintf(if_key_str, "ETH_S%d", i);
+        sprintf(if_desc_str, "eth%d", i);
+
+        esp_netif_ip_info_t ip_info_i = {
+            .ip = {.addr = ESP_IP4TOADDR(192, 168, i, 1)},
+            .netmask = {.addr =  ESP_IP4TOADDR(255, 255, 255, 0)},
+            .gw = {.addr = ESP_IP4TOADDR(192, 168, i, 1)}
+        };
+        ip_infos[i] = ip_info_i;
+
+        eth_netif_cfg.if_key = if_key_str;
+        eth_netif_cfg.if_desc = if_desc_str;
+        eth_netif_cfg.route_prio -= i * 5;
+        eth_netif_cfg.ip_info = &(ip_infos[i]);
+        esp_netif_t *eth_netif = esp_netif_new(&cfg);
+        ESP_ERROR_CHECK(esp_netif_attach(eth_netif, esp_eth_new_netif_glue(eth_handles[i])));
+        esp_eth_start(eth_handles[i]);
+        esp_netif_dhcpc_stop(eth_netif);
+        esp_netif_dhcps_start(eth_netif);
+    }
+    ESP_LOGI(TAG, "--------");
+    for (uint8_t i = 0; i < eth_port_cnt; i++) {
+        ESP_LOGI(TAG, "Network Interface %d: " IPSTR, i, IP2STR(&ip_infos[i].ip));
+    }
+    ESP_LOGI(TAG, "--------");
 #else
     if (eth_port_cnt == 1) {
         // Use default config when using one interface
         eth_netif_cfg = *(ESP_NETIF_BASE_DEFAULT_ETH);
     } else {
-        // Set behavioral config to support multiple interfaces
+        // Set config to support multiple interfaces
         eth_netif_cfg = (esp_netif_inherent_config_t) ESP_NETIF_INHERENT_DEFAULT_ETH();
     }
-#endif
-    char if_key_str[10];
-    char if_desc_str[10];
     cfg = (esp_netif_config_t) {
         .base = &eth_netif_cfg,
         .stack = ESP_NETIF_NETSTACK_DEFAULT_ETH
@@ -71,13 +87,10 @@ void app_main(void)
         eth_netif_cfg.route_prio -= i * 5;
         esp_netif_t *eth_netif = esp_netif_new(&cfg);
         ESP_ERROR_CHECK(esp_netif_attach(eth_netif, esp_eth_new_netif_glue(eth_handles[i])));
-
-#if CONFIG_EXAMPLE_ACT_AS_DHCP_SERVER
-        esp_event_handler_register(ETH_EVENT, ETHERNET_EVENT_CONNECTED, start_dhcp_server_at_connection, eth_netif);
-#endif
-
         esp_eth_start(eth_handles[i]);
     }
+#endif
+
     int server_fd, client_fd;
     struct sockaddr_in server, client;
     char rxbuffer[SOCKET_MAX_LENGTH] = {0};

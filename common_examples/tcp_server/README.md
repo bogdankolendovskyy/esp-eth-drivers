@@ -7,7 +7,7 @@ TCP server is designed to accept transmissions from the client, print them to th
 
 ## Configuring the example
 Configure the example using `idf.py menuconfig`, according to your setup, provide settings for Ethernet initialization. If you want to connect to another ESP32, set the 
-`Act as DHCP server` option in the `Example options`, the IP address of the device will be 192.168.1.1.
+`Act as DHCP server` option in the `Example options`, each IP addres will be assigned an IP 192.168.n.1, where `n` is the number of the interface.
 
 ## Running the example
 To transmit data between your PC and ESP32 you need to wait until it obtains an IP address from DHCP server and run tcp client script.

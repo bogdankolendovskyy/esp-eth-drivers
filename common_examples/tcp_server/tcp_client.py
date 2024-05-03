@@ -28,7 +28,7 @@ logger.info("Transmitting to %s:%d every %d ms", args.ip, SOCKET_PORT, args.time
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
 sock.settimeout(10)
 try:
-    sock.connect((args.ip, args.port))
+    sock.connect((args.ip, SOCKET_PORT))
 except TimeoutError:
     logger.error("Couldn't establish connection due to timeout")
     exit(1)

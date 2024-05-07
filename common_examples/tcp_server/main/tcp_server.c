@@ -13,6 +13,20 @@
 #define SOCKET_MAX_LENGTH   128
 static const char *TAG = "tcp_server";
 
+static void start_dhcp_server_after_connection(void *arg, esp_event_base_t base, int32_t id, void *event_data)
+{
+    esp_netif_t *eth_netif = esp_netif_next_unsafe(NULL);
+    esp_eth_handle_t eth_handle = *(esp_eth_handle_t *)event_data;
+    while (eth_netif != NULL) {
+        esp_eth_handle_t eth_handle_for_current_netif = esp_netif_get_io_driver(eth_netif);
+        if (memcmp(&eth_handle, &eth_handle_for_current_netif, sizeof(esp_eth_handle_t)) == 0) {
+            esp_netif_dhcpc_stop(eth_netif);
+            esp_netif_dhcps_start(eth_netif);
+        }
+        eth_netif = esp_netif_next_unsafe(eth_netif);
+    }
+}
+
 void app_main(void)
 {
     uint8_t eth_port_cnt = 0;
@@ -58,12 +72,11 @@ void app_main(void)
         eth_netif_cfg.ip_info = &(ip_infos[i]);
         esp_netif_t *eth_netif = esp_netif_new(&cfg);
         ESP_ERROR_CHECK(esp_netif_attach(eth_netif, esp_eth_new_netif_glue(eth_handles[i])));
-        esp_eth_start(eth_handles[i]);
-        esp_netif_dhcpc_stop(eth_netif);
-        esp_netif_dhcps_start(eth_netif);
     }
+    esp_event_handler_register(ETH_EVENT, ETHERNET_EVENT_CONNECTED, start_dhcp_server_after_connection, NULL);
     ESP_LOGI(TAG, "--------");
     for (uint8_t i = 0; i < eth_port_cnt; i++) {
+        esp_eth_start(eth_handles[i]);
         ESP_LOGI(TAG, "Network Interface %d: " IPSTR, i, IP2STR(&ip_infos[i].ip));
     }
     ESP_LOGI(TAG, "--------");

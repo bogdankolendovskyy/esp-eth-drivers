@@ -95,12 +95,12 @@ void app_main(void)
         socklen_t client_len = sizeof(client);
         client_fd = accept(server_fd, (struct sockaddr *) &client, &client_len);
         if (client_fd == -1) {
-            ESP_LOGE(TAG, "An error occured when acceptig a connection (errno: %d)", errno);
+            ESP_LOGE(TAG, "An error has occured when accepting a connection (errno: %d)", errno);
         }
         while (1) {
             int read = recv(client_fd, rxbuffer, SOCKET_MAX_LENGTH, 0);
             if (read == -1) {
-                ESP_LOGE(TAG, "An error occured when receiving data (errno: %d)", errno);
+                ESP_LOGE(TAG, "An error has occured when receiving data (errno: %d)", errno);
             } else if (!read) {
                 break;    // done reading
             }
@@ -109,7 +109,7 @@ void app_main(void)
             ESP_LOGI(TAG, "Transmitting: \"%s\"", txbuffer);
             int write = send(client_fd, txbuffer, read, 0);
             if (write == -1) {
-                ESP_LOGE(TAG, "An error occured when sending data (errno: %d)", errno);
+                ESP_LOGE(TAG, "An error has occured when sending data (errno: %d)", errno);
             }
         }
     }

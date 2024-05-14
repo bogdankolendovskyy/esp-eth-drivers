@@ -1,6 +1,6 @@
 # Iperf example
 
-This exmaple provides a simple way to measure network performance using iperf.
+This example provides a simple way to measure network performance using iperf.
 
 ## About the example
 The example uses `iperf` and `iperf-cmd` components for an iperf implementation and provides command line interface for it. It provides DHCP server functionality for connecting to another ESP32, instead of a PC.

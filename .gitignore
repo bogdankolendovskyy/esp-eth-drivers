@@ -27,16 +27,6 @@ GPATH
 **/test_apps/**/sdkconfig
 **/test_apps/**/sdkconfig.old
 
-# Example project files
-**/examples/**/sdkconfig
-**/examples/**/sdkconfig.old
-**/examples/**/build
-**/examples/**/managed_components
-common_examples/**/sdkconfig
-common_examples/**/sdkconfig.old
-common_examples/**/build
-common_examples/**/managed_components
-
 # Project files
 **/sdkconfig
 **/sdkconfig.old

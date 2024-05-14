@@ -5,7 +5,7 @@ import logging
 import time
 import signal
 
-parser = argparse.ArgumentParser(description='Establish TCP connection to a server using berkley sockets and periodically send transmission expecting echo', epilog='Part of the tcp_server example for esp_eth_drivers')
+parser = argparse.ArgumentParser(description='Establish TCP connection to a server using Berkley sockets and periodically send transmission expecting echo', epilog='Part of the tcp_server example for esp_eth_drivers')
 parser.add_argument('ip')
 parser.add_argument('-t', '--time', type=int, default=500, help='Period of transmission (ms)')
 parser.add_argument('-c', '--count', type=int, help='How many transmissions to perform (default: no limit)')

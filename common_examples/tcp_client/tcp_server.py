@@ -4,7 +4,7 @@ import argparse
 import logging
 import signal
 
-parser = argparse.ArgumentParser(description='Serve TCP connection using berkley sockets and wait for connections', epilog='Part of the tcp_client example for esp_eth_drivers')
+parser = argparse.ArgumentParser(description='Serve TCP connection using Berkley sockets and wait for connections', epilog='Part of the tcp_client example for esp_eth_drivers')
 parser.add_argument('ip')
 args = parser.parse_args()
 

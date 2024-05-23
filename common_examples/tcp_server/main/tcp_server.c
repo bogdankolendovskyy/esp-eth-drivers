@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2024 Espressif Systems (Shanghai) CO LTD
+ *
+ * SPDX-License-Identifier: Unlicense OR CC0-1.0
+ */
 #include <stdio.h>
 #include <string.h>
 #include "freertos/FreeRTOS.h"
@@ -11,6 +16,7 @@
 
 #define SOCKET_PORT         5000
 #define SOCKET_MAX_LENGTH   128
+
 static const char *TAG = "tcp_server";
 
 static void start_dhcp_server_after_connection(void *arg, esp_event_base_t base, int32_t id, void *event_data)

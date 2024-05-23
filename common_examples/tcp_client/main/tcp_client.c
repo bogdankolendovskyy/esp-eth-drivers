@@ -90,7 +90,7 @@ void app_main(void)
     char txbuffer[SOCKET_MAX_LENGTH] = {0};
     client_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (client_fd == -1) {
-        ESP_LOGE("Could not create the socket (errno: %d)", errno);
+        ESP_LOGE(TAG, "Could not create the socket (errno: %d)", errno);
         goto err;
     }
     server.sin_family = AF_INET;
@@ -99,7 +99,7 @@ void app_main(void)
     do {
         ret = connect(client_fd, (struct sockaddr *)&server, sizeof(struct sockaddr));
         if (ret == -1) {
-            ESP_LOGE("An error has occurred while connecting to the server (errno: %d)", errno);
+            ESP_LOGE(TAG, "An error has occurred while connecting to the server (errno: %d)", errno);
         }
     } while (ret != 0);
     int transmission_cnt = 0;
@@ -122,6 +122,7 @@ void app_main(void)
         memset(rxbuffer, 0, SOCKET_MAX_LENGTH);
         vTaskDelay(pdMS_TO_TICKS(500));
     }
+    return;
 err:
-    ESP_LOGI("Program was stopped because an error occured");
+    ESP_LOGI(TAG, "Program was stopped because an error occured");
 }

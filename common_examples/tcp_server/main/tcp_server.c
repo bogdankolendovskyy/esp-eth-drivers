@@ -115,8 +115,8 @@ void app_main(void)
     char rxbuffer[SOCKET_MAX_LENGTH] = {0};
     char txbuffer[SOCKET_MAX_LENGTH] = {0};
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (client_fd == -1) {
-        ESP_LOGE("Could not create the socket (errno: %d)", errno);
+    if (server_fd == -1) {
+        ESP_LOGE(TAG, "Could not create the socket (errno: %d)", errno);
         goto err;
     }
     server.sin_family = AF_INET;
@@ -134,6 +134,7 @@ void app_main(void)
         client_fd = accept(server_fd, (struct sockaddr *) &client, &client_len);
         if (client_fd == -1) {
             ESP_LOGE(TAG, "An error has occurred while accepting a connection (errno: %d)", errno);
+            goto err;
         }
         while (1) {
             ret = recv(client_fd, rxbuffer, SOCKET_MAX_LENGTH, 0);
@@ -145,13 +146,14 @@ void app_main(void)
             ESP_LOGI(TAG, "Received \"%s\"", rxbuffer);
             snprintf(txbuffer, SOCKET_MAX_LENGTH, "Transmission #%d. Hello from ESP32 TCP server", ++transmission_cnt);
             ESP_LOGI(TAG, "Transmitting: \"%s\"", txbuffer);
-            ret = send(client_fd, txbuffer, read, 0);
+            ret = send(client_fd, txbuffer, SOCKET_MAX_LENGTH, 0);
             if (ret == -1) {
                 ESP_LOGE(TAG, "An error has occurred while sending data (errno: %d)", errno);
                 break;
             }
         }
     }
+    return;
 err:
-    ESP_LOGI("Program was stopped because an error occured");
+    ESP_LOGI(TAG, "Program was stopped because an error occured");
 }

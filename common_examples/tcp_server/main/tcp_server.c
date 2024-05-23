@@ -104,39 +104,48 @@ void app_main(void)
     }
 #endif
 
-    int server_fd, client_fd;
+    int server_fd, client_fd, ret;
     struct sockaddr_in server, client;
     char rxbuffer[SOCKET_MAX_LENGTH] = {0};
     char txbuffer[SOCKET_MAX_LENGTH] = {0};
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
-
+    if (client_fd == -1) {
+        ESP_LOGE("Could not create the socket (errno: %d)", errno);
+        goto err;
+    }
     server.sin_family = AF_INET;
     server.sin_port = htons(SOCKET_PORT);
     server.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    bind(server_fd, (struct sockaddr *) &server, sizeof(server));
+    ret = bind(server_fd, (struct sockaddr *) &server, sizeof(server));
+    if (ret == -1) {
+        ESP_LOGE(TAG, "Could not bind to the socket (errno: %d)", errno);
+    }
     listen(server_fd, 1);
     int transmission_cnt = 0;
     while (1) {
         socklen_t client_len = sizeof(client);
         client_fd = accept(server_fd, (struct sockaddr *) &client, &client_len);
         if (client_fd == -1) {
-            ESP_LOGE(TAG, "An error has occured when accepting a connection (errno: %d)", errno);
+            ESP_LOGE(TAG, "An error has occurred while accepting a connection (errno: %d)", errno);
         }
         while (1) {
-            int read = recv(client_fd, rxbuffer, SOCKET_MAX_LENGTH, 0);
-            if (read == -1) {
-                ESP_LOGE(TAG, "An error has occured when receiving data (errno: %d)", errno);
-            } else if (!read) {
-                break;    // done reading
+            ret = recv(client_fd, rxbuffer, SOCKET_MAX_LENGTH, 0);
+            if (ret == -1) {
+                ESP_LOGE(TAG, "An error has occurred while receiving data (errno: %d)", errno);
+            } else if (ret == 0) {
+                break;  // done reading
             }
             ESP_LOGI(TAG, "Received \"%s\"", rxbuffer);
             snprintf(txbuffer, SOCKET_MAX_LENGTH, "Transmission #%d. Hello from ESP32 TCP server", ++transmission_cnt);
             ESP_LOGI(TAG, "Transmitting: \"%s\"", txbuffer);
-            int write = send(client_fd, txbuffer, read, 0);
-            if (write == -1) {
-                ESP_LOGE(TAG, "An error has occured when sending data (errno: %d)", errno);
+            ret = send(client_fd, txbuffer, read, 0);
+            if (ret == -1) {
+                ESP_LOGE(TAG, "An error has occurred while sending data (errno: %d)", errno);
+                break;
             }
         }
     }
+err:
+    ESP_LOGI("Program was stopped because an error occured");
 }

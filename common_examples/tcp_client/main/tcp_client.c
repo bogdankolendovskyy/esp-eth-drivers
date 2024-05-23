@@ -79,24 +79,44 @@ void app_main(void)
     // Wait until IP address is assigned to this device
     xSemaphoreTake(x_got_ip_semaphore, portMAX_DELAY);
     ESP_LOGI(TAG, "TCP client has started, waiting for the server to accept a connection.");
-    int client_fd;
+    int client_fd, ret;
     struct sockaddr_in server;
     char rxbuffer[SOCKET_MAX_LENGTH] = {0};
     char txbuffer[SOCKET_MAX_LENGTH] = {0};
     client_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (client_fd == -1) {
+        ESP_LOGE("Could not create the socket (errno: %d)", errno);
+        goto err;
+    }
     server.sin_family = AF_INET;
     server.sin_port = htons(SOCKET_PORT);
     server.sin_addr.s_addr = inet_addr(CONFIG_EXAMPLE_SERVER_IP_ADDRESS);
-    ESP_ERROR_CHECK(connect(client_fd, (struct sockaddr *)&server, sizeof(struct sockaddr)));
+    do {
+        ret = connect(client_fd, (struct sockaddr *)&server, sizeof(struct sockaddr));
+        if (ret == -1) {
+            ESP_LOGE("An error has occurred while connecting to the server (errno: %d)", errno);
+        }
+    } while (ret != 0);
     int transmission_cnt = 0;
     while (1) {
         snprintf(txbuffer, SOCKET_MAX_LENGTH, "Transmission #%d. Hello from ESP32 TCP client", ++transmission_cnt);
         ESP_LOGI(TAG, "Transmitting: \"%s\"", txbuffer);
-        write(client_fd, txbuffer, SOCKET_MAX_LENGTH);
-        read(client_fd, rxbuffer, SOCKET_MAX_LENGTH);
+        ret = send(client_fd, txbuffer, SOCKET_MAX_LENGTH, 0);
+        if (ret == -1) {
+            ESP_LOGE(TAG, "An error has occurred while sending data (errno: %d)", errno);
+            break;
+        }
+        ret = recv(client_fd, rxbuffer, SOCKET_MAX_LENGTH, 0);
+        if (ret == -1) {
+            ESP_LOGE(TAG, "An error has occurred while receiving data (errno: %d)", errno);
+        } else if (ret == 0) {
+            break;  // done reading
+        }
         ESP_LOGI(TAG, "Received \"%s\"", rxbuffer);
         memset(txbuffer, 0, SOCKET_MAX_LENGTH);
         memset(rxbuffer, 0, SOCKET_MAX_LENGTH);
         vTaskDelay(pdMS_TO_TICKS(500));
     }
+err:
+    ESP_LOGI("Program was stopped because an error occured");
 }

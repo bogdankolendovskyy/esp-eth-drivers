@@ -96,12 +96,11 @@ void app_main(void)
     server.sin_family = AF_INET;
     server.sin_port = htons(SOCKET_PORT);
     server.sin_addr.s_addr = inet_addr(CONFIG_EXAMPLE_SERVER_IP_ADDRESS);
-    do {
-        ret = connect(client_fd, (struct sockaddr *)&server, sizeof(struct sockaddr));
-        if (ret == -1) {
-            ESP_LOGE(TAG, "An error has occurred while connecting to the server (errno: %d)", errno);
-        }
-    } while (ret != 0);
+    ret = connect(client_fd, (struct sockaddr *)&server, sizeof(struct sockaddr));
+    if (ret == -1) {
+        ESP_LOGE(TAG, "An error has occurred while connecting to the server (errno: %d)", errno);
+        goto err;
+    }
     int transmission_cnt = 0;
     while (1) {
         snprintf(txbuffer, SOCKET_MAX_LENGTH, "Transmission #%d. Hello from ESP32 TCP client", ++transmission_cnt);
@@ -124,5 +123,6 @@ void app_main(void)
     }
     return;
 err:
+    close(client_fd);
     ESP_LOGI(TAG, "Program was stopped because an error occured");
 }
